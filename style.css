@@ -1,0 +1,263 @@
+:root {
+    --bg-dark: #eee9df;
+    --bg-card: #ffffff;
+    --gold: #171717;
+    --gold-hover: #36332f;
+    --text-light: #171717;
+    --text-muted: #706b63;
+    --border-color: #d6cec0;
+    
+    /* Estados */
+    --green: #5d735f;
+    --red: #8b6260;
+    --amber: #92784e;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    padding: 32px 24px 48px;
+    line-height: 1.45;
+}
+
+body > * {
+    max-width: 1180px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0 22px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+header h1 {
+    color: #171717;
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.tab-btn.active, .tab-btn:hover {
+    background: var(--gold);
+    color: #ffffff;
+    border-color: var(--gold);
+}
+
+/* Indicadores de métricas */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.metric-card {
+    background: var(--bg-card);
+    border-left: 4px solid #171717;
+    padding: 17px 18px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(38, 50, 56, 0.05);
+}
+
+.metric-card h3 {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.metric-card .value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-light);
+    margin-top: 5px;
+}
+
+/* Rejilla de 40 Habitaciones */
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.room-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s;
+    min-height: 154px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(38, 50, 56, 0.04);
+}
+
+.room-card:hover {
+    transform: translateY(-3px);
+}
+
+.room-number {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--gold);
+}
+
+.room-type {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.badge-disponible { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+.badge-ocupada { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+.badge-aseo { background: rgba(245, 158, 11, 0.2); color: var(--amber); }
+
+.badge-disponible { background: #e3eee9; }
+.badge-ocupada { background: #f1e4e3; }
+.badge-aseo { background: #f2ecdf; }
+
+.btn-action {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 5px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.btn-action:hover {
+    background: var(--gold);
+    color: var(--bg-dark);
+}
+
+.btn-secondary {
+    border-color: var(--border-color);
+    color: var(--text-muted);
+}
+
+.btn-secondary:hover {
+    background: #f1ede5;
+    color: var(--text-light);
+}
+
+/* Secciones ocultas */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Formulario Reserva */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    border-radius: 6px;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+/* Notificación Flotante */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--gold);
+    color: #ffffff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: none;
+    z-index: 1000;
+}
+
+@media (max-width: 640px) {
+    body {
+        padding: 20px 14px 32px;
+    }
+
+    header {
+        align-items: flex-start;
+        gap: 12px;
+        flex-direction: column;
+    }
+
+    header > div:last-child {
+        text-align: left !important;
+    }
+
+    .tab-btn {
+        flex: 1 1 100%;
+        text-align: left;
+    }
+
+    .rooms-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+}
