@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Boutique Gran Horizonte - Sistema de Gestión</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Gran Horizonte</h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Hotel Boutique | Panel de Control de 40 Habitaciones</p>
+        </div>
+        <div style="text-align: right;">
+            <span style="color: var(--green);">● Sistema Sincronizado</span>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">OTA Sync: Booking/Airbnb Activo</div>
+        </div>
+    </header>
+
+    <!-- PESTAÑAS -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="cambiarPestana('recepcion', this)">🏢 Recepción / General</button>
+        <button class="tab-btn" onclick="cambiarPestana('limpieza', this)">🧹 Módulo de Limpieza (Housekeeping)</button>
+        <button class="tab-btn" onclick="cambiarPestana('nueva-reserva', this)">➕ Reserva Manual (Evitar Overbooking)</button>
+    </div>
+
+    <!-- MÉTRICAS -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>Total Habitaciones</h3>
+            <div class="value">40</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--green);">
+            <h3>Disponibles</h3>
+            <div class="value" id="count-disponibles">0</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--red);">
+            <h3>Ocupadas</h3>
+            <div class="value" id="count-ocupadas">0</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--amber);">
+            <h3>Requieren Aseo</h3>
+            <div class="value" id="count-aseo">0</div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 1: RECEPCIÓN -->
+    <div id="tab-recepcion" class="tab-content active">
+        <h2 style="margin-bottom: 15px; color: var(--gold);">Estado de las 40 Habitaciones</h2>
+        <div class="rooms-grid" id="grid-recepcion">
+            <!-- Carga dinámica con JavaScript -->
+        </div>
+    </div>
+
+    <!-- PESTAÑA 2: LIMPIEZA -->
+    <div id="tab-limpieza" class="tab-content">
+        <h2 style="margin-bottom: 15px; color: var(--gold);">Panel del Personal de Aseo</h2>
+        <p style="color: var(--text-muted); margin-bottom: 15px;">Muestra en tiempo real las habitaciones que requieren limpieza inmediata tras el Check-out.</p>
+        <div class="rooms-grid" id="grid-limpieza">
+            <!-- Carga dinámica -->
+        </div>
+    </div>
+
+    <!-- PESTAÑA 3: NUEVA RESERVA -->
+    <div id="tab-nueva-reserva" class="tab-content">
+        <div style="max-width: 500px; background: var(--bg-card); padding: 25px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <h2 style="color: var(--gold); margin-bottom: 15px;">Reservar y ocupar habitación</h2>
+            <form id="form-reserva" onsubmit="registrarReserva(event)">
+                <div class="form-group">
+                    <label>Seleccionar Habitación Libre</label>
+                    <select id="select-habitaciones" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Huésped</label>
+                    <input type="text" id="nombre-cliente" placeholder="Ej. Carlos Mendoza" required>
+                </div>
+                <div class="form-group">
+                    <label>Número del cliente</label>
+                    <input type="text" id="numero-cliente" inputmode="numeric" placeholder="Ej. 1234567890" required>
+                </div>
+                <div class="form-group">
+                    <label>Canal de Origen</label>
+                    <select id="canal-origen">
+                        <option value="Llamada Directa">Llamada Telefónica</option>
+                        <option value="Presencial">Recepción / Presencial</option>
+                        <option value="Web Directa">Página Web Directa</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action" style="padding: 12px; background: var(--gold); color: var(--bg-dark);">Confirmar y Bloquear en OTAs</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast / Notificación -->
+    <div class="toast" id="toast-notif">Alerta de actualización</div>
+
+    <script>
+        let habitaciones = [];
+        const CLAVE_ESTADO = 'gran-horizonte-habitaciones';
+        const tipos = ['Suite Presidencial', 'Deluxe King', 'Junior Suite', 'Estándar Superior'];
+
+        for (let i = 1; i <= 40; i++) {
+            let num = i < 10 ? `10${i}` : (i <= 20 ? `1${i}` : (i <= 30 ? `2${i-10}` : `3${i-20}`));
+            let estadoOcupacion = 'DISPONIBLE';
+            let estadoLimpieza = 'LIMPIA';
+            
+            habitaciones.push({
+                id: i,
+                numero: num,
+                tipo: tipos[i % tipos.length],
+                ocupacion: estadoOcupacion,
+                limpieza: estadoLimpieza
+            });
+        }
+
+        try {
+            const estadoGuardado = JSON.parse(localStorage.getItem(CLAVE_ESTADO));
+            if (Array.isArray(estadoGuardado) && estadoGuardado.length === 40) {
+                habitaciones = estadoGuardado;
+            }
+        } catch (error) {
+            localStorage.removeItem(CLAVE_ESTADO);
+        }
+
+        function render() {
+            const gridRecepcion = document.getElementById('grid-recepcion');
+            const gridLimpieza = document.getElementById('grid-limpieza');
+            const selectHab = document.getElementById('select-habitaciones');
+
+            gridRecepcion.innerHTML = '';
+            gridLimpieza.innerHTML = '';
+            selectHab.innerHTML = '';
+
+            let dispCount = 0, ocupCount = 0, aseoCount = 0;
+
+            habitaciones.forEach(h => {
+                if (h.ocupacion === 'OCUPADA') ocupCount++;
+                else if (h.limpieza === 'REQUIERE_ASEO') aseoCount++;
+                else dispCount++;
+
+                let badgeClass = h.ocupacion === 'OCUPADA' ? 'badge-ocupada' : (h.limpieza === 'REQUIERE_ASEO' ? 'badge-aseo' : 'badge-disponible');
+                let estadoTexto = h.ocupacion === 'OCUPADA' ? 'Ocupada' : (h.limpieza === 'REQUIERE_ASEO' ? 'Por Limpiar' : 'Libre');
+
+                let card = document.createElement('div');
+                card.className = 'room-card';
+                card.innerHTML = `
+                    <div class="room-number">Hab. ${h.numero}</div>
+                    <div class="room-type">${h.tipo}</div>
+                    <span class="badge ${badgeClass}">${estadoTexto}</span>
+                    ${h.ocupacion === 'OCUPADA'
+                        ? `<button class="btn-action" onclick="hacerCheckOut(${h.id})">Check-out</button>`
+                        : h.limpieza === 'REQUIERE_ASEO'
+                            ? `<button class="btn-action" onclick="cambiarPestana('limpieza', document.querySelectorAll('.tab-btn')[1])">Ir a limpieza</button>`
+                            : `<button class="btn-action" onclick="abrirReserva(${h.id})">Reservar</button>`}
+                `;
+                gridRecepcion.appendChild(card);
+
+                if (h.limpieza === 'REQUIERE_ASEO') {
+                    let cardL = document.createElement('div');
+                    cardL.className = 'room-card';
+                    cardL.style.borderColor = 'var(--amber)';
+                    cardL.innerHTML = `
+                        <div class="room-number">Hab. ${h.numero}</div>
+                        <div class="room-type">${h.tipo}</div>
+                        <span class="badge badge-aseo">Requiere Aseo</span>
+                        <button class="btn-action" onclick="marcarLimpia(${h.id})">Ya está limpia</button>
+                        <button class="btn-action btn-secondary" onclick="marcarNoLista(${h.id})">No está lista</button>
+                    `;
+                    gridLimpieza.appendChild(cardL);
+                }
+
+                if (h.ocupacion === 'DISPONIBLE' && h.limpieza === 'LIMPIA') {
+                    let opt = document.createElement('option');
+                    opt.value = h.id;
+                    opt.innerText = `Hab. ${h.numero} - ${h.tipo} - Libre`;
+                    selectHab.appendChild(opt);
+                }
+            });
+
+            document.getElementById('count-disponibles').innerText = dispCount;
+            document.getElementById('count-ocupadas').innerText = ocupCount;
+            document.getElementById('count-aseo').innerText = aseoCount;
+            localStorage.setItem(CLAVE_ESTADO, JSON.stringify(habitaciones));
+        }
+
+        function hacerCheckOut(id) {
+            let hab = habitaciones.find(h => h.id === id);
+            if (hab) {
+                hab.ocupacion = 'DISPONIBLE';
+                hab.limpieza = 'REQUIERE_ASEO';
+                mostrarToast(`Check-out completado. Confirma si la habitación ${hab.numero} está lista.`);
+                render();
+            }
+        }
+
+        function abrirReserva(id) {
+            let hab = habitaciones.find(h => h.id === id);
+            if (hab && hab.ocupacion === 'DISPONIBLE' && hab.limpieza === 'LIMPIA') {
+                cambiarPestana('nueva-reserva', document.querySelectorAll('.tab-btn')[2]);
+                document.getElementById('select-habitaciones').value = id;
+                document.getElementById('nombre-cliente').focus();
+            }
+        }
+
+        function marcarLimpia(id) {
+            let hab = habitaciones.find(h => h.id === id);
+            if (hab) {
+                hab.ocupacion = 'DISPONIBLE';
+                hab.limpieza = 'LIMPIA';
+                render();
+                cambiarPestana('recepcion', document.querySelector('.tab-btn'));
+                mostrarToast(`Habitación ${hab.numero} quedó libre y limpia. Ahora puedes ocuparla.`);
+            }
+        }
+
+        function marcarNoLista(id) {
+            let hab = habitaciones.find(h => h.id === id);
+            if (hab) {
+                hab.ocupacion = 'DISPONIBLE';
+                hab.limpieza = 'REQUIERE_ASEO';
+                mostrarToast(`La habitación ${hab.numero} continúa pendiente de limpieza.`);
+                render();
+            }
+        }
+
+        function registrarReserva(e) {
+            e.preventDefault();
+            let habId = parseInt(document.getElementById('select-habitaciones').value);
+            let cliente = document.getElementById('nombre-cliente').value;
+            let numeroCliente = document.getElementById('numero-cliente').value.trim();
+            let canal = document.getElementById('canal-origen').value;
+
+            let hab = habitaciones.find(h => h.id === habId);
+            if (hab && hab.ocupacion === 'DISPONIBLE' && hab.limpieza === 'LIMPIA') {
+                hab.ocupacion = 'OCUPADA';
+                hab.cliente = cliente;
+                hab.numeroCliente = numeroCliente;
+                mostrarToast(`Reserva confirmada para ${cliente}, cliente ${numeroCliente}.`);
+                document.getElementById('form-reserva').reset();
+                cambiarPestana('recepcion', document.querySelector('.tab-btn'));
+                render();
+            }
+        }
+
+        function cambiarPestana(tabName, tabButton) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(tb => tb.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            tabButton.classList.add('active');
+        }
+
+        function mostrarToast(mensaje) {
+            let t = document.getElementById('toast-notif');
+            t.innerText = mensaje;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 4000);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem(CLAVE_ESTADO, JSON.stringify(habitaciones));
+        });
+
+        render();
+    </script>
+</body>
+</html>
